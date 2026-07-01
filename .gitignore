@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database
+db.sqlite3
+
+# Media uploads (user uploaded content)
+media/
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Editors / OS temporary files
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.thumbs

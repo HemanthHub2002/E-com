@@ -1,0 +1,70 @@
+{% extends 'store/base.html' %}
+
+{% block title %}My Wishlist - E-com{% endblock %}
+
+{% block content %}
+<div class="wishlist-page-wrapper">
+    <h1 class="wishlist-page-title">My Wishlist</h1>
+
+    {% if wishlist_items %}
+    <div class="wishlist-cards-grid">
+        {% for item in wishlist_items %}
+        {% with item.product as prod %}
+        <article class="product-card" id="wishlist-card-{{ prod.id }}">
+            <div class="product-card-media">
+                {% if prod.image %}
+                    <img src="{{ prod.image.url }}" alt="{{ prod.name }}" class="product-card-image">
+                {% else %}
+                    <div class="product-card-placeholder">📦</div>
+                {% endif %}
+                
+                <a href="{% url 'store:toggle_wishlist' prod.id %}" class="wishlist-toggle-overlay-btn wishlisted" title="Remove from Wishlist" id="wishlist-toggle-{{ prod.id }}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                </a>
+            </div>
+            
+            <div class="product-card-body">
+                <span class="product-category-name">{{ prod.category.name }}</span>
+                <h3 class="product-card-title">
+                    <a href="{% url 'store:product_detail' prod.slug %}">{{ prod.name }}</a>
+                </h3>
+                
+                <div class="product-rating-row">
+                    <div class="rating-stars-small">
+                        <span class="stars-gold">★</span>
+                        <span class="rating-value">{{ prod.average_rating|stringformat:".1f" }}</span>
+                    </div>
+                    <span class="reviews-count-text">({{ prod.review_count }})</span>
+                </div>
+
+                <div class="product-price-action-row">
+                    <span class="product-card-price">₹{{ prod.price }}</span>
+                    
+                    {% if prod.stock > 0 %}
+                        {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+                            <button class="btn btn-sm btn-primary disabled" disabled title="Administrators cannot buy products">Add to Cart</button>
+                        {% else %}
+                            <form action="{% url 'store:cart_add' prod.id %}" method="post" class="quick-add-cart-form">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-primary" id="wishlist-add-cart-{{ prod.id }}">Add to Cart</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge badge-danger">Out of Stock</span>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% endwith %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state animate-fade-in">
+        <span class="empty-icon">❤️</span>
+        <h2>Your Wishlist is Empty</h2>
+        <p>Save items you like in your wishlist to access them easily later.</p>
+        <a href="{% url 'store:home' %}" class="btn btn-primary">Discover Products</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,265 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block title %}Shop Premium Products - E-com{% endblock %}
+
+{% block content %}
+<!-- Hero Carousel Section -->
+<section class="carousel-container animate-fade-in" id="hero-carousel">
+    <div class="carousel-slides">
+        <!-- Slide 1 -->
+        <div class="carousel-slide active" style="background: url('{% static "images/banners/banner_summer.png" %}') no-repeat center center; background-size: cover;">
+            <div class="carousel-content">
+                <span class="hero-badge animate-fade-in">Summer Collection 2026</span>
+                <h1 class="hero-headline animate-fade-in">Experience Luxury in Simplicity</h1>
+                <p class="hero-tagline animate-fade-in">Curated premium items designed for maximum utility and architectural beauty.</p>
+                <a href="#catalog-start" class="btn btn-primary btn-lg animate-fade-in">Browse Collection</a>
+            </div>
+        </div>
+        
+        <!-- Slide 2 -->
+        <div class="carousel-slide" style="background: url('{% static "images/banners/banner_audio.png" %}') no-repeat center center; background-size: cover;">
+            <div class="carousel-content">
+                <span class="hero-badge animate-fade-in">Premium Audio</span>
+                <h1 class="hero-headline animate-fade-in">Pure Sound, Zero Distractions</h1>
+                <p class="hero-tagline animate-fade-in">Studio-grade noise-cancelling headphones featuring 40h battery life and spatial audio.</p>
+                <a href="/product/aerospace-wireless-headphones/" class="btn btn-primary btn-lg animate-fade-in">Shop Headphones</a>
+            </div>
+        </div>
+        
+        <!-- Slide 3 -->
+        <div class="carousel-slide" style="background: url('{% static "images/banners/banner_office.png" %}') no-repeat center center; background-size: cover;">
+            <div class="carousel-content">
+                <span class="hero-badge animate-fade-in">Office Luxury</span>
+                <h1 class="hero-headline animate-fade-in">Ergonomic Comfort for Creators</h1>
+                <p class="hero-tagline animate-fade-in">Adaptive mesh office desk chairs designed with adjustable armrests and weight-sensitive tilt limits.</p>
+                <a href="/product/zenith-ergonomic-desk-chair/" class="btn btn-primary btn-lg animate-fade-in">Explore Chairs</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Controls -->
+    <button class="carousel-control prev" aria-label="Previous Slide" onclick="moveSlide(-1)">&#10094;</button>
+    <button class="carousel-control next" aria-label="Next Slide" onclick="moveSlide(1)">&#10095;</button>
+    
+    <!-- Indicators -->
+    <div class="carousel-indicators">
+        <span class="dot active" onclick="currentSlide(0)"></span>
+        <span class="dot" onclick="currentSlide(1)"></span>
+        <span class="dot" onclick="currentSlide(2)"></span>
+    </div>
+</section>
+
+<div class="catalog-section-wrapper" id="catalog-start">
+    <div class="catalog-layout">
+        <!-- Sidebar Filters -->
+        <aside class="catalog-filters-sidebar">
+            <h2 class="filter-sidebar-title">Refine Collection</h2>
+            <form method="get" class="filters-form" id="catalog-filter-form">
+                <!-- Keep search and sorting parameters -->
+                {% if request.GET.q %}
+                    <input type="hidden" name="q" value="{{ request.GET.q }}">
+                {% endif %}
+                {% if request.GET.sort %}
+                    <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                {% endif %}
+                {% if request.GET.category %}
+                    <input type="hidden" name="category" value="{{ request.GET.category }}">
+                {% endif %}
+
+                <!-- Price Range Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">Price Range</label>
+                    <div class="price-inputs-row">
+                        <input type="number" name="min_price" placeholder="Min" value="{{ min_price|default:'' }}" aria-label="Min price" id="filter-min-price">
+                        <span class="price-sep">&mdash;</span>
+                        <input type="number" name="max_price" placeholder="Max" value="{{ max_price|default:'' }}" aria-label="Max price" id="filter-max-price">
+                    </div>
+                </div>
+
+                <!-- Stock availability -->
+                <div class="filter-group form-checkbox-group">
+                    <input type="checkbox" name="in_stock" value="1" id="filter-in-stock" {% if in_stock == '1' %}checked{% endif %}>
+                    <label for="filter-in-stock" class="checkbox-label">In Stock Only</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="filters-apply-button">Apply Filters</button>
+                <a href="{% url 'store:home' %}{% if request.GET.category %}?category={{ request.GET.category }}{% endif %}" class="btn btn-outline btn-block text-center mt-2" id="filters-reset-button">Clear Filters</a>
+            </form>
+        </aside>
+
+        <!-- Main Product Section -->
+        <section class="catalog-products-main">
+            <!-- Catalog Toolbar -->
+            <div class="catalog-toolbar">
+                <div class="toolbar-info" style="display: flex; align-items: center; gap: 15px;">
+                    <p class="results-count">Showing <strong>{{ products|length }}</strong> product(s)</p>
+                    {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+                        <a href="/admin/store/product/add/" class="btn btn-sm btn-outline" style="padding: 4px 10px; font-size: 12px; border-radius: var(--border-radius-sm); border: 1px solid var(--color-primary); color: var(--color-primary); background-color: var(--color-bg-white);">＋ Add New Product</a>
+                    {% endif %}
+                </div>
+                
+                <div class="toolbar-controls">
+                    <!-- Category Selection Navigation -->
+                    <div class="category-pills">
+                        <a href="{% url 'store:home' %}{% if request.GET.q %}?q={{ request.GET.q }}{% endif %}" class="pill {% if not selected_category %}active{% endif %}">All</a>
+                        {% for cat in categories %}
+                            <a href="{% url 'store:home' %}?category={{ cat.slug }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" class="pill {% if selected_category.slug == cat.slug %}active{% endif %}">
+                                {{ cat.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Sorting Dropdown -->
+                    <div class="sort-selector">
+                        <label for="sort-select">Sort By:</label>
+                        <select id="sort-select" onchange="location = this.value;" aria-label="Sort products">
+                            <option value="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if in_stock %}in_stock={{ in_stock }}&{% endif %}sort=" {% if not sort_by %}selected{% endif %}>Default</option>
+                            <option value="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if in_stock %}in_stock={{ in_stock }}&{% endif %}sort=price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+                            <option value="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if in_stock %}in_stock={{ in_stock }}&{% endif %}sort=price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+                            <option value="?{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}{% if in_stock %}in_stock={{ in_stock }}&{% endif %}sort=newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest arrivals</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Grid -->
+            {% if products %}
+            <div class="product-cards-grid">
+                {% for prod in products %}
+                <article class="product-card" id="product-card-{{ prod.id }}">
+                    <!-- Product Image / Banner -->
+                    <div class="product-card-media">
+                        {% if prod.image %}
+                            <img src="{{ prod.image.url }}" alt="{{ prod.name }}" class="product-card-image" loading="lazy">
+                        {% else %}
+                            <div class="product-card-placeholder">
+                                <span class="placeholder-icon">📦</span>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Wishlist Overlay Toggle Button -->
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'store:toggle_wishlist' prod.id %}" class="wishlist-toggle-overlay-btn" title="Add to Wishlist" id="wishlist-overlay-{{ prod.id }}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        </a>
+                        {% endif %}
+                        
+                        <!-- Stock Status -->
+                        {% if prod.stock == 0 %}
+                            <span class="product-status-tag out-of-stock">Sold Out</span>
+                        {% elif prod.stock <= 3 %}
+                            <span class="product-status-tag low-stock">Only {{ prod.stock }} Left</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Product Card Body -->
+                    <div class="product-card-body">
+                        <span class="product-category-name">{{ prod.category.name }}</span>
+                        <h3 class="product-card-title">
+                            <a href="{% url 'store:product_detail' prod.slug %}">{{ prod.name }}</a>
+                        </h3>
+                        
+                        <!-- Product rating -->
+                        <div class="product-rating-row">
+                            <div class="rating-stars-small">
+                                <span class="stars-gold">★</span>
+                                <span class="rating-value">{{ prod.average_rating|stringformat:".1f" }}</span>
+                            </div>
+                            <span class="reviews-count-text">({{ prod.review_count }})</span>
+                        </div>
+
+                        <!-- Price & Action -->
+                        <div class="product-price-action-row">
+                            <span class="product-card-price">₹{{ prod.price }}</span>
+                            {% if prod.stock > 0 %}
+                                {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+                                    <button class="btn-quick-add disabled" disabled title="Administrators cannot buy products" aria-label="Administrators cannot buy products">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                    </button>
+                                {% else %}
+                                    <form action="{% url 'store:cart_add' prod.id %}" method="post" class="quick-add-cart-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn-quick-add" title="Add to Cart" aria-label="Add {{ prod.name }} to cart" id="quick-add-{{ prod.id }}">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% else %}
+                                <button class="btn-quick-add disabled" disabled title="Out of stock">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            {% endif %}
+                        </div>
+                        
+                        {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+                        <div class="product-card-admin-actions" style="margin-top: 12px; display: flex; gap: 8px; border-top: 1px solid var(--color-border); padding-top: 8px;">
+                            <a href="/admin/store/product/{{ prod.id }}/change/" class="btn btn-sm btn-outline" style="flex: 1; padding: 4px; font-size: 11px; text-align: center; text-decoration: none; border-radius: var(--border-radius-sm);">✏️ Edit</a>
+                            <a href="/admin/store/product/{{ prod.id }}/delete/" class="btn btn-sm btn-outline" style="flex: 1; padding: 4px; font-size: 11px; text-align: center; text-decoration: none; border-radius: var(--border-radius-sm); color: #b91c1c; border-color: #fca5a5;">🗑️ Delete</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-results-box">
+                <span class="empty-icon">🔍</span>
+                <h3>No Products Found</h3>
+                <p>We couldn't find any products matching your search or filters. Try adjusting your settings.</p>
+                <a href="{% url 'store:home' %}" class="btn btn-outline">Clear All Filters</a>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let slideIndex = 0;
+    let slideInterval;
+
+    function showSlides(n) {
+        const slides = document.querySelectorAll('.carousel-slide');
+        const dots = document.querySelectorAll('.carousel-indicators .dot');
+        
+        if (slides.length === 0) return;
+        
+        if (n >= slides.length) { slideIndex = 0; }
+        if (n < 0) { slideIndex = slides.length - 1; }
+        
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+        
+        slides[slideIndex].classList.add('active');
+        dots[slideIndex].classList.add('active');
+    }
+
+    function moveSlide(n) {
+        clearInterval(slideInterval);
+        slideIndex += n;
+        showSlides(slideIndex);
+        startAutoSlide();
+    }
+
+    function currentSlide(n) {
+        clearInterval(slideInterval);
+        slideIndex = n;
+        showSlides(slideIndex);
+        startAutoSlide();
+    }
+
+    function startAutoSlide() {
+        slideInterval = setInterval(() => {
+            slideIndex++;
+            showSlides(slideIndex);
+        }, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        showSlides(slideIndex);
+        startAutoSlide();
+    });
+</script>
+{% endblock %}

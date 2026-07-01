@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - #{{ order.order_number }}</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --color-primary: #1E293B;
+            --color-secondary: #0F172A;
+            --color-border: #E2E8F0;
+            --color-bg-light: #F8FAFC;
+            --color-text-main: #334155;
+            --color-text-muted: #64748B;
+            --color-accent: #854D0E;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--color-text-main);
+            background-color: #F1F5F9;
+            padding: 40px 20px;
+            line-height: 1.5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .invoice-outer-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Action bar for print/close options */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--color-secondary);
+            color: white;
+            padding: 15px 24px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-title {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-print {
+            background-color: white;
+            color: var(--color-secondary);
+        }
+
+        .btn-print:hover {
+            background-color: #E2E8F0;
+        }
+
+        .btn-back {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-back:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* The Invoice Sheet itself */
+        .invoice-card {
+            background-color: white;
+            padding: 50px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--color-border);
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--color-secondary);
+            padding-bottom: 30px;
+            margin-bottom: 35px;
+        }
+
+        .brand-logo {
+            font-family: var(--font-heading);
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--color-secondary);
+            letter-spacing: -0.5px;
+        }
+
+        .brand-accent {
+            color: var(--color-accent);
+        }
+
+        .invoice-title-block {
+            text-align: right;
+        }
+
+        .invoice-title-label {
+            font-family: var(--font-heading);
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-secondary);
+            margin-bottom: 5px;
+        }
+
+        .invoice-meta-text {
+            font-size: 13px;
+            color: var(--color-text-muted);
+        }
+
+        .invoice-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .details-column h3 {
+            font-family: var(--font-heading);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-secondary);
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 6px;
+        }
+
+        .details-text {
+            font-size: 13px;
+            color: var(--color-text-main);
+            line-height: 1.6;
+        }
+
+        .details-item {
+            margin-bottom: 6px;
+        }
+
+        .details-label {
+            color: var(--color-text-muted);
+            font-weight: 500;
+            width: 100px;
+            display: inline-block;
+        }
+
+        /* Invoice Table */
+        .invoice-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 35px;
+        }
+
+        .invoice-table th {
+            font-family: var(--font-heading);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background-color: var(--color-bg-light);
+            color: var(--color-secondary);
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .invoice-table td {
+            font-size: 13px;
+            padding: 16px;
+            border-bottom: 1px solid var(--color-border);
+            color: var(--color-text-main);
+        }
+
+        .invoice-table tr:last-child td {
+            border-bottom: 2px solid var(--color-secondary);
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        /* Summary Calculations */
+        .invoice-summary-section {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 40px;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+
+        .payment-info-box {
+            background-color: var(--color-bg-light);
+            padding: 20px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+        }
+
+        .payment-info-title {
+            font-family: var(--font-heading);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-secondary);
+            margin-bottom: 10px;
+        }
+
+        .payment-info-row {
+            font-size: 12px;
+            margin-bottom: 6px;
+            color: var(--color-text-main);
+        }
+
+        .payment-info-row span {
+            color: var(--color-text-muted);
+            font-weight: 500;
+        }
+
+        .calculation-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .calculation-table td {
+            padding: 8px 12px;
+            font-size: 13px;
+            color: var(--color-text-main);
+        }
+
+        .calculation-table tr.total-row td {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-secondary);
+            border-top: 1px solid var(--color-secondary);
+            padding-top: 12px;
+            margin-top: 4px;
+        }
+
+        .invoice-footer {
+            border-top: 1px dashed var(--color-border);
+            padding-top: 30px;
+            text-align: center;
+            color: var(--color-text-muted);
+            font-size: 12px;
+        }
+
+        .footer-thankyou {
+            font-family: var(--font-heading);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-secondary);
+            margin-bottom: 5px;
+        }
+
+        /* Print Media Stylesheet */
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+
+            .action-bar {
+                display: none;
+            }
+
+            .invoice-card {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+
+            /* Prevent page split inside elements */
+            .invoice-header,
+            .invoice-details-grid,
+            .invoice-table,
+            .invoice-summary-section,
+            .invoice-footer {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="invoice-outer-container">
+        <!-- Action controls panel -->
+        <div class="action-bar no-print">
+            <span class="action-title">Invoice - #{{ order.order_number }}</span>
+            <div class="action-buttons">
+                <button onclick="window.print()" class="btn btn-print">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Print / Save PDF
+                </button>
+                <a href="#" onclick="window.close(); return false;" class="btn btn-back">Close Window</a>
+            </div>
+        </div>
+
+        <!-- Printable invoice sheet -->
+        <div class="invoice-card">
+            
+            <!-- Header Block -->
+            <div class="invoice-header">
+                <div>
+                    <div class="brand-logo"><span class="brand-accent">E-</span>com</div>
+                    <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 5px; line-height: 1.4;">
+                        Premium Luxury Apparel & Curated Goods<br>
+                        info@ecomstore.com | www.ecomstore.com
+                    </div>
+                </div>
+                
+                <div class="invoice-title-block">
+                    <div class="invoice-title-label">Invoice</div>
+                    <div class="invoice-meta-text">
+                        <strong>Invoice No:</strong> INV-{{ order.order_number|slice:"-4:"|upper }}<br>
+                        <strong>Order Date:</strong> {{ order.created_at|date:"M d, Y" }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details billing/shipping columns -->
+            <div class="invoice-details-grid">
+                <div class="details-column">
+                    <h3>Bill To</h3>
+                    <div class="details-text">
+                        <strong>{{ address.full_name }}</strong><br>
+                        {{ address.street_address }}<br>
+                        {{ address.city }}, {{ address.state }} - {{ address.postal_code }}<br>
+                        {{ address.country }}<br>
+                        <strong>Phone:</strong> {{ address.phone_number }}
+                    </div>
+                </div>
+
+                <div class="details-column">
+                    <h3>Order Summary</h3>
+                    <div class="details-text">
+                        <div class="details-item"><span class="details-label">Order ID:</span> #{{ order.order_number }}</div>
+                        <div class="details-item"><span class="details-label">Status:</span> {{ order.get_status_display }}</div>
+                        <div class="details-item"><span class="details-label">Payment ID:</span> {% if order.payment_id %}{{ order.payment_id }}{% else %}N/A{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items list breakdown table -->
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Product Details</th>
+                        <th class="text-right" style="width: 15%;">Unit Price</th>
+                        <th class="text-right" style="width: 15%;">Quantity</th>
+                        <th class="text-right" style="width: 20%;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.all %}
+                    <tr>
+                        <td>
+                            <strong style="color: var(--color-secondary);">{{ item.product.name }}</strong><br>
+                            <span style="font-size: 11px; color: var(--color-text-muted);">Category: {{ item.product.category.name }}</span>
+                        </td>
+                        <td class="text-right">₹{{ item.price|floatformat:2 }}</td>
+                        <td class="text-right">{{ item.quantity }}</td>
+                        <td class="text-right">₹{{ item.get_cost|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Calculation summary values -->
+            <div class="invoice-summary-section">
+                <div class="payment-info-box">
+                    <div class="payment-info-title">Transaction Information</div>
+                    <div class="payment-info-row"><span>Payment Method:</span> {{ order.payment_method }}</div>
+                    <div class="payment-info-row"><span>Transaction Status:</span> {% if order.is_paid %}Success / Settlement Cleared{% else %}Awaiting Clearance / Pending{% endif %}</div>
+                    <div class="payment-info-row"><span>Authorized Date:</span> {% if order.is_paid %}{{ order.updated_at|date:"M d, Y \a\t g:i A" }}{% else %}N/A{% endif %}</div>
+                </div>
+
+                <div>
+                    <table class="calculation-table">
+                        <tr>
+                            <td>Subtotal</td>
+                            <td class="text-right">₹{{ order.subtotal|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Shipping fee</td>
+                            <td class="text-right">₹{{ order.shipping|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td>Tax amount</td>
+                            <td class="text-right">₹{{ order.tax|floatformat:2 }}</td>
+                        </tr>
+                        <tr class="total-row">
+                            <td>Total due</td>
+                            <td class="text-right">₹{{ order.total|floatformat:2 }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer terms/greetings -->
+            <div class="invoice-footer">
+                <div class="footer-thankyou">Thank you for your patronage!</div>
+                <div>If you have any questions concerning this invoice, please email support@ecomstore.com.</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Auto trigger browser print dialog -->
+    <script>
+        window.onload = function() {
+            // Auto open the print window/PDF save modal
+            window.print();
+        };
+    </script>
+</body>
+</html>

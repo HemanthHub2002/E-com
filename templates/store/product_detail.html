@@ -1,0 +1,281 @@
+{% extends 'store/base.html' %}
+
+{% block title %}{{ product.name }} - E-com{% endblock %}
+
+{% block content %}
+<div class="product-detail-page-wrapper">
+    <a href="{% url 'store:home' %}" class="back-to-catalog-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to Catalog
+    </a>
+
+    <!-- Main Product Container -->
+    <div class="product-detail-container" id="product-detail-container-{{ product.id }}">
+        <!-- Left Pane: Product Image Carousel -->
+        <div class="product-detail-media-pane" style="flex: 1; min-width: 290px;">
+            <style>
+                .product-detail-media-pane {
+                    display: block !important;
+                    background-color: transparent !important;
+                    border: none !important;
+                    overflow: visible !important;
+                    aspect-ratio: auto !important;
+                }
+                .gallery-nav-btn:hover {
+                    background-color: var(--color-primary) !important;
+                }
+                .gallery-nav-btn:hover svg {
+                    stroke: var(--color-bg-white) !important;
+                }
+                .thumbnail-item:hover {
+                    border-color: rgba(0, 0, 0, 0.2) !important;
+                }
+                .thumbnail-item.active {
+                    border-color: var(--color-primary) !important;
+                }
+            </style>
+            {% if product.image %}
+                <div class="product-gallery-container">
+                    <!-- Main Display Window -->
+                    <div class="gallery-main-window" style="position: relative; overflow: hidden; border-radius: var(--border-radius-md); border: 1px solid var(--color-border); aspect-ratio: 1; background-color: var(--color-bg-white); display: flex; align-items: center; justify-content: center;">
+                        
+                        <!-- Slides wrapper -->
+                        <div class="gallery-slides-wrapper" style="display: flex; width: 100%; height: 100%; transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);">
+                            <!-- Slide 1: Main Image -->
+                            <div class="gallery-slide" style="min-width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                                <img src="{{ product.image.url }}" alt="{{ product.name }} - Main" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 20px;" class="gallery-zoomable-image">
+                            </div>
+                            
+                            <!-- Gallery Slides -->
+                            {% for gallery_img in product.gallery_images.all %}
+                            <div class="gallery-slide" style="min-width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                                <img src="{{ gallery_img.image.url }}" alt="{{ product.name }} - Gallery {{ forloop.counter }}" style="max-width: 100%; max-height: 100%; object-fit: contain; padding: 20px;" class="gallery-zoomable-image">
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Navigation Arrows -->
+                        {% if product.gallery_images.all %}
+                        <button type="button" class="gallery-nav-btn prev-btn" onclick="slideGallery(-1)" aria-label="Previous slide" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.9); border: 1px solid var(--color-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; z-index: 10; box-shadow: var(--shadow-sm);">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-main)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <button type="button" class="gallery-nav-btn next-btn" onclick="slideGallery(1)" aria-label="Next slide" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background-color: rgba(255, 255, 255, 0.9); border: 1px solid var(--color-border); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; z-index: 10; box-shadow: var(--shadow-sm);">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-main)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Thumbnails row -->
+                    {% if product.gallery_images.all %}
+                    <div class="gallery-thumbnails-row" style="display: flex; gap: 10px; margin-top: 15px; overflow-x: auto; padding-bottom: 5px;">
+                        <!-- Thumbnail 1: Main Image -->
+                        <div class="thumbnail-item active" onclick="goToSlide(0)" style="width: 70px; height: 70px; border-radius: var(--border-radius-sm); border: 2px solid transparent; overflow: hidden; cursor: pointer; transition: all 0.3s; flex-shrink: 0; background-color: white; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                            <img src="{{ product.image.url }}" alt="Thumbnail Main" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        
+                        <!-- Gallery Thumbnails -->
+                        {% for gallery_img in product.gallery_images.all %}
+                        <div class="thumbnail-item" onclick="goToSlide({{ forloop.counter }})" style="width: 70px; height: 70px; border-radius: var(--border-radius-sm); border: 2px solid transparent; overflow: hidden; cursor: pointer; transition: all 0.3s; flex-shrink: 0; background-color: white; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                            <img src="{{ gallery_img.image.url }}" alt="Thumbnail {{ forloop.counter }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="product-detail-placeholder-box">
+                    <span class="placeholder-icon">📦</span>
+                    <p>No Image Available</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Pane: Product Specs & Actions -->
+        <div class="product-detail-specs-pane">
+            <span class="product-detail-category">{{ product.category.name }}</span>
+            <h1 class="product-detail-title" id="product-detail-name-heading">{{ product.name }}</h1>
+
+            <!-- Ratings Bar -->
+            <div class="product-detail-rating-row">
+                <div class="rating-stars-gold">
+                    <span class="star-rating-score">★ {{ product.average_rating|stringformat:".1f" }}</span>
+                </div>
+                <span class="rating-separator">|</span>
+                <span class="detail-reviews-count">{{ product.review_count }} Reviews</span>
+            </div>
+
+            <!-- Price Tag -->
+            <div class="product-detail-price-row">
+                <span class="detail-price-amount">₹{{ product.price }}</span>
+            </div>
+
+            <!-- Stock status -->
+            <div class="product-detail-inventory">
+                {% if product.stock > 0 %}
+                    <span class="badge badge-success">In Stock ({{ product.stock }} units available)</span>
+                {% else %}
+                    <span class="badge badge-danger">Out of Stock</span>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="product-detail-description">
+                <h3>Description</h3>
+                <p>{{ product.description|linebreaksbr }}</p>
+            </div>
+
+            <!-- Cart and Wishlist Actions -->
+            <div class="product-detail-actions-section">
+                {% if product.stock > 0 %}
+                    {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+                        <button class="btn btn-primary btn-lg btn-block disabled" disabled title="Administrators cannot buy products">Administrators Cannot Place Orders</button>
+                    {% else %}
+                        <form action="{% url 'store:cart_add' product.id %}" method="post" class="detail-add-to-cart-form">
+                            {% csrf_token %}
+                            <div class="quantity-picker-group">
+                                <label for="quantity-selector">Qty:</label>
+                                <select name="quantity" id="quantity-selector" class="quantity-dropdown" aria-label="Select quantity">
+                                    {% with ''|center:product.stock as range %}
+                                    {% for _ in range %}
+                                        <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                                    {% endfor %}
+                                    {% endwith %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg flex-grow" id="add-to-cart-submit">Add to Cart</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                <button class="btn btn-primary btn-lg btn-block disabled" disabled>Out of Stock</button>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                <a href="{% url 'store:toggle_wishlist' product.id %}" class="btn btn-outline btn-lg {% if in_wishlist %}btn-wishlisted{% endif %}" id="wishlist-toggle-button">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    {% if in_wishlist %}Wishlisted{% else %}Add to Wishlist{% endif %}
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Admin Controls Panel -->
+            {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+            <div class="admin-product-controls-wrapper" style="margin-top: 25px; padding: 20px; border: 1px solid var(--color-border); border-radius: var(--border-radius-md); background-color: var(--color-bg-white); width: 100%;">
+                <h4 style="margin-bottom: 12px; font-family: var(--font-header); font-size: 15px; text-transform: uppercase; letter-spacing: 1px;">Admin Product Controls</h4>
+                <div class="admin-controls-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="/admin/store/product/add/" class="btn btn-sm btn-outline" style="padding: 8px 16px; font-size: 13px; text-decoration: none; border-radius: var(--border-radius-sm);">＋ Add Product</a>
+                    <a href="/admin/store/product/{{ product.id }}/change/" class="btn btn-sm btn-outline" style="padding: 8px 16px; font-size: 13px; text-decoration: none; border-radius: var(--border-radius-sm);">✏️ Edit Product</a>
+                    <a href="/admin/store/product/{{ product.id }}/change/#productimage_set-group" class="btn btn-sm btn-outline" style="padding: 8px 16px; font-size: 13px; text-decoration: none; border-radius: var(--border-radius-sm);">🖼️ Manage Carousel</a>
+                    <a href="/admin/store/product/{{ product.id }}/delete/" class="btn btn-sm btn-outline" style="padding: 8px 16px; font-size: 13px; text-decoration: none; border-radius: var(--border-radius-sm); color: #b91c1c; border-color: #fca5a5;">🗑️ Delete Product</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <section class="product-reviews-section" id="reviews-list-section">
+        <h2 class="reviews-section-title">Customer Reviews</h2>
+
+        <div class="reviews-layout">
+            <!-- Review submission form -->
+            <div class="review-submission-pane">
+                {% if user.is_authenticated %}
+                    <h3>{% if user_review %}Edit Your Review{% else %}Write a Review{% endif %}</h3>
+                    <form action="{% url 'store:add_review' product.id %}" method="post" class="review-entry-form" id="review-feedback-form">
+                        {% csrf_token %}
+                        <!-- Custom star rating radio inputs -->
+                        <div class="rating-input-group">
+                            <label class="rating-input-label">Your Rating:</label>
+                            <div class="star-rating-radio-container">
+                                {% for r in "54321"|make_list %}
+                                    <input type="radio" name="rating" id="star-{{ r }}" value="{{ r }}" {% if user_review.rating == r|add:0 %}checked{% endif %} class="star-radio-input" required>
+                                    <label for="star-{{ r }}" class="star-radio-label" title="{{ r }} Stars">★</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Feedback comment -->
+                        <div class="form-group">
+                            <label for="review-comment-field">Comments:</label>
+                            <textarea name="comment" id="review-comment-field" rows="4" placeholder="Share your experience with this product..." required>{{ user_review.comment|default:'' }}</textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" id="review-submit-button">Submit Review</button>
+                    </form>
+                {% else %}
+                    <div class="review-login-prompt">
+                        <p>You must be logged in to submit a review.</p>
+                        <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-outline btn-sm">Log In</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- List of customer reviews -->
+            <div class="reviews-list-pane">
+                {% if reviews %}
+                    <div class="reviews-feed">
+                        {% for rev in reviews %}
+                        <article class="review-feed-item">
+                            <div class="review-item-header">
+                                <span class="review-author">{{ rev.user.username }}</span>
+                                <span class="review-date">{{ rev.created_at|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="review-stars-row">
+                                {% for _ in "12345"|make_list %}
+                                    {% if forloop.counter <= rev.rating %}
+                                        <span class="star star-filled">★</span>
+                                    {% else %}
+                                        <span class="star star-empty">★</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <p class="review-comment-text">{{ rev.comment|linebreaksbr }}</p>
+                        </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No reviews have been written for this product yet. Be the first to share your thoughts!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    let currentSlideIndex = 0;
+    const totalSlides = 1 + {{ product.gallery_images.count|default:0 }};
+    const slidesWrapper = document.querySelector('.gallery-slides-wrapper');
+    const thumbnails = document.querySelectorAll('.thumbnail-item');
+
+    function updateGalleryPosition() {
+        if (slidesWrapper) {
+            slidesWrapper.style.transform = `translateX(-${currentSlideIndex * 100}%)`;
+        }
+        // Update active class on thumbnails
+        thumbnails.forEach((thumb, idx) => {
+            if (idx === currentSlideIndex) {
+                thumb.classList.add('active');
+            } else {
+                thumb.classList.remove('active');
+            }
+        });
+    }
+
+    function slideGallery(direction) {
+        currentSlideIndex += direction;
+        if (currentSlideIndex < 0) {
+            currentSlideIndex = totalSlides - 1;
+        } else if (currentSlideIndex >= totalSlides) {
+            currentSlideIndex = 0;
+        }
+        updateGalleryPosition();
+    }
+
+    function goToSlide(index) {
+        currentSlideIndex = index;
+        updateGalleryPosition();
+    }
+</script>
+{% endblock %}

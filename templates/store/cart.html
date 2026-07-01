@@ -1,0 +1,124 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Shopping Cart - E-com{% endblock %}
+
+{% block content %}
+<div class="cart-page-wrapper">
+    <h1 class="cart-page-title">Your Shopping Cart</h1>
+
+    {% if cart %}
+    <div class="cart-layout-container">
+        <!-- Cart Items List -->
+        <div class="cart-items-section">
+            {% for item in cart %}
+            {% with item.product as prod %}
+            <article class="cart-item-card" id="cart-item-{{ prod.id }}">
+                <!-- Item image -->
+                <div class="cart-item-image">
+                    {% if prod.image %}
+                    <img src="{{ prod.image.url }}" alt="{{ prod.name }}">
+                    {% else %}
+                    <div class="cart-item-placeholder">📦</div>
+                    {% endif %}
+                </div>
+
+                <!-- Item description details -->
+                <div class="cart-item-details">
+                    <span class="cart-item-category">{{ prod.category.name }}</span>
+                    <h3 class="cart-item-name">
+                        <a href="{% url 'store:product_detail' prod.slug %}">{{ prod.name }}</a>
+                    </h3>
+                    <p class="cart-item-unit-price">Unit Price: ₹{{ item.price }}</p>
+                </div>
+
+                <!-- Quantity adjust form -->
+                <div class="cart-item-quantity">
+                    <form action="{% url 'store:cart_update' prod.id %}" method="post" class="cart-quantity-form">
+                        {% csrf_token %}
+                        <label for="qty-{{ prod.id }}" class="sr-only">Quantity for {{ prod.name }}</label>
+                        <select name="quantity" id="qty-{{ prod.id }}" onchange="this.form.submit()"
+                            class="cart-qty-select" aria-label="Select quantity">
+                            {% with ''|center:prod.stock as range %}
+                            {% for _ in range %}
+                            <option value="{{ forloop.counter }}" {% if item.quantity == forloop.counter %}selected{% endif %}>
+                                {{ forloop.counter }}
+                            </option>
+                            {% endfor %}
+                            {% endwith %}
+                        </select>
+                    </form>
+                </div>
+
+                <!-- Item actions -->
+                <div class="cart-item-actions">
+                    <span class="cart-item-subtotal">₹{{ item.total_price }}</span>
+                    <a href="{% url 'store:cart_remove' prod.id %}" class="btn-remove-item" title="Remove Item"
+                        id="remove-cart-item-{{ prod.id }}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                            </path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Remove
+                    </a>
+                </div>
+            </article>
+            {% endwith %}
+            {% endfor %}
+        </div>
+
+        <!-- Checkout Summary Pane -->
+        <aside class="cart-summary-section">
+            <div class="cart-summary-card">
+                <h2 class="summary-card-title">Order Summary</h2>
+                <hr class="summary-divider">
+
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span class="summary-value">₹{{ cart.get_subtotal_price }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Estimated Tax (18% GST)</span>
+                    <span class="summary-value">₹{{ cart.get_tax_price }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping Charges</span>
+                    {% if cart.get_shipping_price == 0 %}
+                    <span class="summary-value text-success">Free</span>
+                    {% else %}
+                    <span class="summary-value">₹{{ cart.get_shipping_price }}</span>
+                    {% endif %}
+                </div>
+                <div class="summary-promo-note">
+                    <p>Free shipping on orders above ₹1000!</p>
+                </div>
+
+                <hr class="summary-divider">
+
+                <div class="summary-row total-row">
+                    <span>Total Amount</span>
+                    <span class="summary-value">₹{{ cart.get_total_price }}</span>
+                </div>
+
+                <div class="summary-checkout-actions">
+                    <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-block btn-lg"
+                        id="cart-checkout-button">Proceed to Checkout</a>
+                    <a href="{% url 'store:home' %}" class="btn btn-outline btn-block text-center mt-2">Continue
+                        Shopping</a>
+                </div>
+            </div>
+        </aside>
+    </div>
+    {% else %}
+    <div class="empty-cart-state animate-fade-in">
+        <span class="empty-cart-icon">🛒</span>
+        <h2>Your Cart is Empty</h2>
+        <p>Looks like you haven't added anything to your cart yet. Take a look at our luxury catalog!</p>
+        <a href="{% url 'store:home' %}" class="btn btn-primary btn-lg">Browse Shop</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

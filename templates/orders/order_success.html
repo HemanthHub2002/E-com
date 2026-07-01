@@ -1,0 +1,33 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Order Confirmed - E-com{% endblock %}
+
+{% block content %}
+<div class="auth-page-container">
+    <div class="auth-card text-center animate-fade-in" id="order-success-container">
+        <span class="status-icon-large text-success">✓</span>
+        <h1 class="auth-title mt-2">Thank You for Your Order!</h1>
+        <p class="auth-subtitle">Your transaction was processed successfully. A confirmation summary is listed below.</p>
+
+        <div class="order-success-receipt text-left mt-3">
+            <h3 class="receipt-section-title">Order Information</h3>
+            <p><strong>Order Number:</strong> #{{ order.order_number }}</p>
+            <p><strong>Payment Status:</strong> {% if order.is_paid %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-warning">Pay on Delivery</span>{% endif %}</p>
+            <p><strong>Method:</strong> {{ order.get_payment_method_display }}</p>
+            <p><strong>Order Total:</strong> ₹{{ order.total }}</p>
+
+            <hr class="receipt-divider">
+
+            <h3 class="receipt-section-title">Shipping Information</h3>
+            <p><strong>Recipient:</strong> {{ address.full_name }}</p>
+            <p><strong>Address:</strong> {{ address.street_address }}, {{ address.city }}, {{ address.state }} - {{ address.postal_code }}, {{ address.country }}</p>
+            <p><strong>Contact Phone:</strong> {{ address.phone_number }}</p>
+        </div>
+
+        <div class="mt-4">
+            <a href="{% url 'orders:order_detail' order.order_number %}" class="btn btn-primary btn-block" id="btn-track-order-success">Track Order Status</a>
+            <a href="{% url 'store:home' %}" class="btn btn-outline btn-block mt-2">Continue Shopping</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Processing Payment - E-com{% endblock %}
+
+{% block content %}
+<div class="payment-processing-wrapper">
+    <div class="payment-card animate-fade-in" id="payment-card-panel">
+        <h1 class="payment-title">Order #{{ order.order_number }}</h1>
+        <p class="payment-sub">Review details and complete payment to confirm your order.</p>
+
+        <div class="payment-summary-box">
+            <div class="pay-summary-row">
+                <span>Items Subtotal</span>
+                <span>₹{{ order.subtotal }}</span>
+            </div>
+            <div class="pay-summary-row">
+                <span>Tax & Shipping</span>
+                <span>₹{{ order.tax|add:order.shipping }}</span>
+            </div>
+            <hr class="summary-divider">
+            <div class="pay-summary-row total-row">
+                <span>Total Amount Due</span>
+                <span>₹{{ order.total }}</span>
+            </div>
+        </div>
+
+        <!-- Verification form sent back to server -->
+        <form action="{% url 'orders:payment_verify' %}" method="post" id="verify-form">
+            {% csrf_token %}
+            <input type="hidden" name="order_id" value="{{ order.order_number }}">
+            <input type="hidden" name="payment_id" id="razorpay_payment_id" value="">
+            <input type="hidden" name="signature" id="razorpay_signature" value="">
+            <input type="hidden" name="status" id="payment_status" value="success">
+        </form>
+
+        {% if is_mock %}
+            <!-- Mock Payment Simulated Modal -->
+            <div class="mock-sandbox-container">
+                <div class="sandbox-header">
+                    <span class="sandbox-badge">Razorpay Sandbox</span>
+                    <h3>Local Mock Simulation Mode</h3>
+                    <p>No active Razorpay API credentials were found or the connection failed. You can simulate checkout success or failure states below.</p>
+                </div>
+                
+                <div class="sandbox-actions-row">
+                    <button type="button" onclick="submitSimulatedPayment('success')" class="btn btn-primary" id="btn-mock-success">Simulate Payment Success</button>
+                    <button type="button" onclick="submitSimulatedPayment('fail')" class="btn btn-outline btn-danger-hover" id="btn-mock-fail">Simulate Payment Failure</button>
+                </div>
+            </div>
+        {% else %}
+            <!-- Real Razorpay Secure Checkout Button -->
+            <div class="real-pay-container" style="margin-top: 25px; text-align: center; padding: 20px; border: 1px solid var(--color-border); border-radius: var(--border-radius-md); background-color: var(--color-bg-white);">
+                <p style="margin-bottom: 20px; color: var(--color-text-muted); font-size: 14px; line-height: 1.5;">Click below to open the secure Razorpay payment gateway to complete your payment.</p>
+                <button type="button" class="btn btn-primary btn-block btn-lg" id="rzp-pay-button" style="width: 100%; padding: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-radius: var(--border-radius-sm);">Pay with Razorpay</button>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if not is_mock %}
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        const options = {
+            "key": "{{ razorpay_key_id }}",
+            "amount": "{{ amount_paise }}",
+            "currency": "INR",
+            "name": "E-com",
+            "description": "Order #{{ order.order_number }}",
+            "order_id": "{{ razorpay_order_id }}",
+            "handler": function (response) {
+                document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+                document.getElementById('razorpay_signature').value = response.razorpay_signature;
+                document.getElementById('payment_status').value = 'success';
+                document.getElementById('verify-form').submit();
+            },
+            "prefill": {
+                "name": "{{ request.user.username }}",
+                "email": "{{ request.user.email|default:'Hemanthkgr2002@gamil.com' }}",
+                "contact": "7979798768",
+                "method": "upi"
+            },
+            "theme": {
+                "color": "#000000"
+            }
+        };
+
+        const rzp1 = new Razorpay(options);
+
+        document.getElementById('rzp-pay-button').onclick = function(e) {
+            rzp1.open();
+            e.preventDefault();
+        };
+    </script>
+{% else %}
+    <script>
+        function submitSimulatedPayment(status) {
+            document.getElementById('payment_status').value = status;
+            if (status === 'success') {
+                document.getElementById('razorpay_payment_id').value = 'pay_mock_' + Math.random().toString(36).substring(2, 10);
+                document.getElementById('razorpay_signature').value = 'sig_mock_' + Math.random().toString(36).substring(2, 15);
+            }
+            document.getElementById('verify-form').submit();
+        }
+    </script>
+{% endif %}
+{% endblock %}

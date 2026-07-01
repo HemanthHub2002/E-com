@@ -1,0 +1,155 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Admin Dashboard - E-com{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard-wrapper">
+    <div class="admin-dashboard-header">
+        <h1 class="admin-dashboard-title">Store Management Dashboard</h1>
+        <p class="admin-dashboard-subtitle">Real-time metrics, analytics, inventory checklists and order operations.</p>
+    </div>
+
+    <!-- Metrics Cards Grid -->
+    <div class="admin-metrics-grid">
+        <div class="metric-card">
+            <span class="metric-icon">💰</span>
+            <div class="metric-details">
+                <span class="metric-label">Total Revenue</span>
+                <span class="metric-value">₹{{ total_revenue|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-icon">📦</span>
+            <div class="metric-details">
+                <span class="metric-label">Total Orders</span>
+                <span class="metric-value">{{ total_orders }}</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-icon">👥</span>
+            <div class="metric-details">
+                <span class="metric-label">Customers</span>
+                <span class="metric-value">{{ total_users }}</span>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <span class="metric-icon">⚠️</span>
+            <div class="metric-details">
+                <span class="metric-label">Low Stock Items</span>
+                <span class="metric-value text-warning">{{ low_stock_products|length }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Distribution Section -->
+    <div class="dashboard-section-card">
+        <h2 class="section-card-title">Order Status Distribution</h2>
+        <div class="status-distribution-row">
+            <div class="status-pill status-new">
+                <span class="status-count">{{ status_counts.new }}</span>
+                <span class="status-name">New / Unpaid</span>
+            </div>
+            <div class="status-pill status-paid">
+                <span class="status-count">{{ status_counts.paid }}</span>
+                <span class="status-name">Paid / Processing</span>
+            </div>
+            <div class="status-pill status-shipped">
+                <span class="status-count">{{ status_counts.shipped }}</span>
+                <span class="status-name">Shipped</span>
+            </div>
+            <div class="status-pill status-delivered">
+                <span class="status-count">{{ status_counts.delivered }}</span>
+                <span class="status-name">Delivered</span>
+            </div>
+            <div class="status-pill status-cancelled">
+                <span class="status-count">{{ status_counts.cancelled }}</span>
+                <span class="status-name">Cancelled</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Split Pane Dashboard Content -->
+    <div class="admin-dashboard-split">
+        <!-- Left: Low Stock warnings -->
+        <section class="admin-split-column">
+            <div class="dashboard-section-card h-100">
+                <h2 class="section-card-title text-danger-accent">Inventory Alerts</h2>
+                <p class="section-card-desc">The following items are running low or sold out. Restock soon.</p>
+                
+                {% if low_stock_products %}
+                <div class="inventory-alerts-list">
+                    {% for prod in low_stock_products %}
+                    <div class="inventory-alert-item {% if prod.stock == 0 %}out-of-stock{% endif %}">
+                        <div class="prod-info">
+                            <span class="prod-name"><strong>{{ prod.name }}</strong></span>
+                            <span class="prod-category">{{ prod.category.name }}</span>
+                        </div>
+                        <div class="stock-badge">
+                            {% if prod.stock == 0 %}
+                                <span class="badge badge-danger">Sold Out (0)</span>
+                            {% else %}
+                                <span class="badge badge-warning">{{ prod.stock }} units left</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p class="text-success">✔ All products are well stocked.</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Right: Recent Orders -->
+        <section class="admin-split-column">
+            <div class="dashboard-section-card h-100">
+                <h2 class="section-card-title">Recent Orders</h2>
+                <p class="section-card-desc">Latest customer purchases awaiting fulfillment.</p>
+                
+                {% if recent_orders %}
+                <div class="recent-orders-list">
+                    {% for order in recent_orders %}
+                    <div class="recent-order-item">
+                        <div class="order-info">
+                            <span class="order-number">#{{ order.order_number }}</span>
+                            <span class="order-meta">by {{ order.user.username }} | {{ order.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="order-value-status" style="display: flex; align-items: center; gap: 12px;">
+                            <a href="{% url 'orders:download_invoice' order.order_number %}" target="_blank" class="admin-invoice-btn" title="Download Invoice" style="color: var(--color-text-muted); display: inline-flex; align-items: center; transition: var(--transition-smooth); padding: 4px;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            </a>
+                            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+                                <span class="order-total">₹{{ order.total|floatformat:2 }}</span>
+                                <span class="order-status">
+                                    {% if order.status == 'New' %}
+                                        <span class="badge badge-info">Placed</span>
+                                    {% elif order.status == 'Paid' %}
+                                        <span class="badge badge-primary">Processing</span>
+                                    {% elif order.status == 'Shipped' %}
+                                        <span class="badge badge-warning">Shipped</span>
+                                    {% elif order.status == 'Delivered' %}
+                                        <span class="badge badge-success">Delivered</span>
+                                    {% elif order.status == 'Cancelled' %}
+                                        <span class="badge badge-danger">Cancelled</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <p>No recent orders found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Payment Failed - E-com{% endblock %}
+
+{% block content %}
+<div class="auth-page-container">
+    <div class="auth-card text-center animate-fade-in" id="payment-failed-container">
+        <span class="status-icon-large text-danger">✕</span>
+        <h1 class="auth-title mt-2">Payment Transaction Failed</h1>
+        <p class="auth-subtitle">We were unable to process your payment for Order <strong>#{{ order.order_number }}</strong>. As a result, the transaction was cancelled and no funds were captured.</p>
+        
+        <div class="failure-details-box mt-3 text-left">
+            <p><strong>Order Reference:</strong> #{{ order.order_number }}</p>
+            <p><strong>Total Amount:</strong> ₹{{ order.total }}</p>
+            <p><strong>Reason:</strong> User cancelled, invalid signatures or insufficient funds.</p>
+        </div>
+
+        <div class="mt-4">
+            <a href="{% url 'orders:checkout' %}" class="btn btn-primary btn-block">Try Checkout Again</a>
+            <a href="{% url 'store:home' %}" class="btn btn-outline btn-block mt-2">Return to Catalog</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

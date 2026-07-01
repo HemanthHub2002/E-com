@@ -1,0 +1,160 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Checkout - E-com{% endblock %}
+
+{% block content %}
+<div class="checkout-page-wrapper">
+    <h1 class="checkout-page-title">Secure Checkout</h1>
+
+    <form action="{% url 'orders:place_order' %}" method="post" class="checkout-form-container" id="checkout-main-form">
+        {% csrf_token %}
+        
+        <!-- Left Column: Shipping Address and Payment Options -->
+        <div class="checkout-left-column">
+            <!-- Shipping Addresses Card -->
+            <div class="checkout-section-card" id="address-selection-section">
+                <h2 class="checkout-section-title">1. Shipping Address</h2>
+                
+                <div class="addresses-selection-list">
+                    {% if addresses %}
+                        {% for address in addresses %}
+                        <div class="address-radio-card">
+                            <input type="radio" name="shipping_address" id="address-{{ address.id }}" value="{{ address.id }}" {% if address.is_default or forloop.first %}checked{% endif %} class="address-radio-input" onchange="toggleNewAddressForm(false)">
+                            <label for="address-{{ address.id }}" class="address-radio-label">
+                                <span class="recipient-name">{{ address.full_name }}</span>
+                                <span class="address-summary">
+                                    {{ address.street_address }}, {{ address.city }}, {{ address.state }} - {{ address.postal_code }}
+                                </span>
+                                <span class="phone-summary">Phone: {{ address.phone_number }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Option to create a new address -->
+                    <div class="address-radio-card new-address-card">
+                        <input type="radio" name="shipping_address" id="address-new" value="new" {% if not addresses %}checked{% endif %} class="address-radio-input" onchange="toggleNewAddressForm(true)">
+                        <label for="address-new" class="address-radio-label">
+                            <strong>Deliver to a New Address</strong>
+                            <span class="address-summary">Fill in the delivery details below.</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Inline New Address Form -->
+                <div class="new-address-form-wrapper {% if addresses %}hidden{% endif %}" id="new-address-form-box">
+                    <h3 class="new-address-form-subtitle">New Shipping Address</h3>
+                    <div class="new-address-grid-fields">
+                        {% for field in address_form %}
+                        <div class="form-group {% if field.name == 'is_default' %}form-checkbox-group{% endif %}">
+                            {% if field.name == 'is_default' %}
+                                {{ field }}
+                                <label for="{{ field.id_for_label }}" class="checkbox-label">{{ field.label }}</label>
+                            {% else %}
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Method Card -->
+            <div class="checkout-section-card" id="payment-selection-section">
+                <h2 class="checkout-section-title">2. Payment Method</h2>
+                <div class="payment-methods-list">
+                    <!-- Razorpay card -->
+                    <div class="payment-radio-card">
+                        <input type="radio" name="payment_method" id="payment-razorpay" value="Razorpay" checked class="payment-radio-input">
+                        <label for="payment-razorpay" class="payment-radio-label">
+                            <span class="payment-method-name">Razorpay Secure Checkout</span>
+                            <span class="payment-method-desc">Pay instantly using Credit Cards, Debit Cards, NetBanking, or UPI wallets.</span>
+                        </label>
+                    </div>
+
+                    <!-- COD card -->
+                    <div class="payment-radio-card">
+                        <input type="radio" name="payment_method" id="payment-cod" value="COD" class="payment-radio-input">
+                        <label for="payment-cod" class="payment-radio-label">
+                            <span class="payment-method-name">Cash on Delivery (COD)</span>
+                            <span class="payment-method-desc">Pay in cash directly upon receipt at your delivery doorstep.</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Order Items Review Summary -->
+        <aside class="checkout-right-column">
+            <div class="checkout-summary-card">
+                <h2 class="summary-card-title">Review Order</h2>
+                <hr class="summary-divider">
+
+                <!-- Items Review -->
+                <div class="checkout-items-review">
+                    {% for item in cart %}
+                    <div class="checkout-item-row">
+                        <div class="item-info">
+                            <span class="item-name">{{ item.product.name }}</span>
+                            <span class="item-qty-price">Qty: {{ item.quantity }} &times; ₹{{ item.price }}</span>
+                        </div>
+                        <span class="item-total-price">₹{{ item.total_price }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <hr class="summary-divider">
+
+                <!-- Totals -->
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>₹{{ cart.get_subtotal_price }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Estimated Tax (18%)</span>
+                    <span>₹{{ cart.get_tax_price }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    {% if cart.get_shipping_price == 0 %}
+                        <span class="text-success">Free</span>
+                    {% else %}
+                        <span>₹{{ cart.get_shipping_price }}</span>
+                    {% endif %}
+                </div>
+                <hr class="summary-divider">
+                <div class="summary-row total-row">
+                    <span>Total Amount</span>
+                    <span>₹{{ cart.get_total_price }}</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg mt-3" id="btn-place-order">Place Order</button>
+                <a href="{% url 'store:cart_detail' %}" class="btn btn-outline btn-block text-center mt-2">Back to Cart</a>
+            </div>
+        </aside>
+    </form>
+</div>
+
+<script>
+    function toggleNewAddressForm(show) {
+        const formBox = document.getElementById("new-address-form-box");
+        const fields = formBox.querySelectorAll("input, select");
+        if (show) {
+            formBox.classList.remove("hidden");
+            fields.forEach(f => {
+                if (f.type !== "checkbox") f.required = true;
+            });
+        } else {
+            formBox.classList.add("hidden");
+            fields.forEach(f => f.required = false);
+        }
+    }
+    
+    // Run on startup in case of page reloads
+    document.addEventListener("DOMContentLoaded", () => {
+        const isNewAddressChecked = document.getElementById("address-new").checked;
+        toggleNewAddressForm(isNewAddressChecked);
+    });
+</script>
+{% endblock %}

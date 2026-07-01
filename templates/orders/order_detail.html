@@ -1,0 +1,150 @@
+{% extends 'store/base.html' %}
+
+{% block title %}Order Details #{{ order.order_number }} - E-com{% endblock %}
+
+{% block content %}
+<div class="order-detail-page-wrapper">
+    <a href="{% url 'accounts:profile' %}" class="back-to-profile-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to Profile
+    </a>
+
+    <!-- Order Banner Info -->
+    <div class="order-detail-header-card">
+        <div class="header-main-details">
+            <h1 class="order-detail-title">Order #{{ order.order_number }}</h1>
+            <p class="order-placed-date">Placed on {{ order.created_at|date:"F d, Y \a\t g:i A" }}</p>
+        </div>
+        <div class="header-status-badge" style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+            {% if order.status == 'Cancelled' %}
+                <span class="badge badge-lg badge-danger">Cancelled</span>
+            {% else %}
+                <span class="badge badge-lg badge-success">{{ order.get_status_display }}</span>
+            {% endif %}
+            <a href="{% url 'orders:download_invoice' order.order_number %}" target="_blank" class="btn btn-sm btn-outline" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; text-decoration: none; border-radius: var(--border-radius-sm);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download Invoice
+            </a>
+        </div>
+    </div>
+
+    <!-- Visual Tracking Pipeline -->
+    {% if order.status != 'Cancelled' %}
+    <div class="order-tracker-card" id="order-tracker-visual">
+        <div class="tracker-steps-container">
+            <!-- Step 1: Placed -->
+            <div class="tracker-step completed">
+                <span class="step-icon">✓</span>
+                <span class="step-label">Placed</span>
+            </div>
+            <div class="tracker-connector {% if order.status != 'New' %}completed{% endif %}"></div>
+            
+            <!-- Step 2: Paid/Processing -->
+            <div class="tracker-step {% if order.status != 'New' %}completed{% elif order.is_paid %}completed{% endif %}">
+                <span class="step-icon">{% if order.status != 'New' or order.is_paid %}✓{% else %}2{% endif %}</span>
+                <span class="step-label">Processing</span>
+            </div>
+            <div class="tracker-connector {% if order.status == 'Shipped' or order.status == 'Delivered' %}completed{% endif %}"></div>
+            
+            <!-- Step 3: Shipped -->
+            <div class="tracker-step {% if order.status == 'Shipped' or order.status == 'Delivered' %}completed{% endif %}">
+                <span class="step-icon">{% if order.status == 'Shipped' or order.status == 'Delivered' %}✓{% else %}3{% endif %}</span>
+                <span class="step-label">Shipped</span>
+            </div>
+            <div class="tracker-connector {% if order.status == 'Delivered' %}completed{% endif %}"></div>
+            
+            <!-- Step 4: Delivered -->
+            <div class="tracker-step {% if order.status == 'Delivered' %}completed{% endif %}">
+                <span class="step-icon">{% if order.status == 'Delivered' %}✓{% else %}4{% endif %}</span>
+                <span class="step-label">Delivered</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Order Details Grid -->
+    <div class="order-details-grid">
+        <!-- Left: Ordered Items Summary -->
+        <div class="order-details-items-panel">
+            <div class="details-section-card">
+                <h2 class="section-card-title">Ordered Items</h2>
+                <div class="order-items-list">
+                    {% for item in order.items.all %}
+                    <article class="order-item-detail-row">
+                        <div class="item-media">
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                            {% else %}
+                                <div class="item-placeholder">📦</div>
+                            {% endif %}
+                        </div>
+                        <div class="item-info">
+                            <h3><a href="{% url 'store:product_detail' item.product.slug %}">{{ item.product.name }}</a></h3>
+                            <p class="item-specs">Price: ₹{{ item.price }} | Quantity: {{ item.quantity }}</p>
+                        </div>
+                        <span class="item-row-total">₹{{ item.total_price }}</span>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Address Snapshot & Order Cost Totals -->
+        <aside class="order-details-summary-panel">
+            <!-- Shipping Snapshot Card -->
+            <div class="details-section-card">
+                <h2 class="section-card-title">Delivery Details</h2>
+                <div class="address-details-snapshot">
+                    <p class="recipient-name"><strong>{{ address.full_name }}</strong></p>
+                    <p class="address-text">
+                        {{ address.street_address }}<br>
+                        {{ address.city }}, {{ address.state }} - {{ address.postal_code }}<br>
+                        {{ address.country }}
+                    </p>
+                    <p class="address-phone"><strong>Phone:</strong> {{ address.phone_number }}</p>
+                </div>
+            </div>
+
+            <!-- Price Calculations Card -->
+            <div class="details-section-card">
+                <h2 class="section-card-title">Billing Summary</h2>
+                <div class="billing-details-box">
+                    <div class="billing-row">
+                        <span>Items Subtotal</span>
+                        <span>₹{{ order.subtotal }}</span>
+                    </div>
+                    <div class="billing-row">
+                        <span>Estimated Tax (18%)</span>
+                        <span>₹{{ order.tax }}</span>
+                    </div>
+                    <div class="billing-row">
+                        <span>Shipping Cost</span>
+                        {% if order.shipping == 0 %}
+                            <span class="text-success">Free</span>
+                        {% else %}
+                            <span>₹{{ order.shipping }}</span>
+                        {% endif %}
+                    </div>
+                    <hr class="summary-divider">
+                    <div class="billing-row total-row">
+                        <span>Grand Total Paid</span>
+                        <span>₹{{ order.total }}</span>
+                    </div>
+                    <div class="billing-payment-type mt-2 text-center">
+                        <small>Paid via <strong>{{ order.get_payment_method_display }}</strong></small>
+                    </div>
+                </div>
+                
+                <!-- Cancel Eligible Orders -->
+                {% if order.status == 'New' or order.status == 'Paid' %}
+                <div class="order-cancellation-actions mt-3">
+                    <a href="{% url 'orders:cancel_order' order.order_number %}" class="btn btn-outline btn-block btn-danger-hover" onclick="return confirm('Are you sure you want to cancel this order? This action will restore product stock levels.')" id="btn-cancel-order">
+                        Cancel Order
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}
