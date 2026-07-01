@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-qv$$r@@7tkz8g7r$ens=d@9!u2k53d^mq%g_w038$rd^qybatu
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -141,4 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Razorpay Integration Credentials
 RAZORPAY_KEY_ID = 'rzp_test_T8Gv2vWgKV5JrQ'
 RAZORPAY_KEY_SECRET = 'dpGHagGkrh78uVP8N6RELILW'
+
+# WhiteNoise storage optimization
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 

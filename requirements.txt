@@ -82,3 +82,4 @@ Werkzeug==3.0.1
 whitenoise==6.11.0
 xhtml2pdf==0.2.17
 zipp==3.17.0
+gunicorn==20.1.0
