@@ -3,7 +3,7 @@ services:
     name: e-com-store
     env: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn ecommerce.wsgi:application"
+    startCommand: "python manage.py migrate && python seed_store.py && python seed_gallery.py && gunicorn ecommerce.wsgi:application"
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
