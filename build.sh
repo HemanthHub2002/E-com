@@ -2,6 +2,9 @@
 # exit on error
 set -o errexit
 
+# Set Cargo home to a writable directory to prevent read-only filesystem errors during Rust builds
+export CARGO_HOME=/tmp/cargo
+
 # Install dependencies
 pip install -r requirements.txt
 
